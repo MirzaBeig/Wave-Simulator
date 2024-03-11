@@ -1,0 +1,106 @@
+
+#pragma kernel Kernel_Clear
+
+#pragma kernel Kernel_WaveSimulator
+#pragma kernel Kernel_CalculateNormals
+
+#define THREAD_COUNT 16
+
+RWTexture2D<float4> heightTexture;
+//RWTexture2D<float2> velocityTexture;
+
+uint size;
+
+float time;
+float deltaTime;
+
+float4 iMouse = 0.0;
+
+float inputRadius = 8.0;
+float decay = 0.99;
+
+// DO NOT EXCEED 2.0.
+
+float speed = 1.0;
+
+// Neighbour pixel offsets: top, bottom, left, right.
+
+#define off_L int2(-1,  0);
+#define off_R int2( 1,  0);
+#define off_T int2( 0,  1);
+#define off_B int2( 0, -1);
+
+[numthreads(THREAD_COUNT, THREAD_COUNT, 1)]
+void Kernel_Clear(uint3 id : SV_DispatchThreadID)
+{
+    heightTexture[id.xy] = 0.0;
+}
+
+[numthreads(THREAD_COUNT, THREAD_COUNT, 1)]
+void Kernel_WaveSimulator(uint3 id : SV_DispatchThreadID)
+{
+    int2 id_C = id.xy;
+
+    int2 id_L = id_C + off_L;
+    int2 id_R = id_C + off_R;
+    int2 id_T = id_C + off_T;
+    int2 id_B = id_C + off_B;
+    
+    float4 height = heightTexture[id_C];
+        
+    // If the mouse is down, add a wave.
+    // Can also just multiply by iMouse.z to avoid the if statement.
+    
+    if (iMouse.z > 0.0)
+    {
+        height.x += smoothstep(1.0, 0.0, length(iMouse.xy - id_C) / inputRadius);
+    }
+    
+    float height_L = heightTexture[id_L].x;
+    float height_R = heightTexture[id_R].x;
+    float height_T = heightTexture[id_T].x;
+    float height_B = heightTexture[id_B].x;
+    
+    float neighbourSum = height_L + height_R + height_T + height_B;
+    float neighbourAverage = neighbourSum / 4.0;
+    
+    // The actual propagation...
+    // Based off: https://github.com/evanw/webgl-water/blob/master/water.js.
+    
+    // Move velocity towards local average.    
+    // target - current = scaled direction.
+    
+    height.y += neighbourAverage - height.x;
+    height.y *= decay;
+    
+    // Apply velocity.
+    
+    height.x += height.y * speed;
+    
+    heightTexture[id_C] = height;
+}
+
+[numthreads(THREAD_COUNT, THREAD_COUNT, 1)]
+void Kernel_CalculateNormals(uint3 id : SV_DispatchThreadID)
+{
+    int2 id_C = id.xy;
+
+    int2 id_L = id_C + off_L;
+    int2 id_R = id_C + off_R;
+    int2 id_T = id_C + off_T;
+    int2 id_B = id_C + off_B;
+    
+    float4 height = heightTexture[id_C];
+            
+    float height_L = heightTexture[id_L].x;
+    float height_R = heightTexture[id_R].x;
+    float height_T = heightTexture[id_T].x;
+    float height_B = heightTexture[id_B].x;
+            
+    // Calculate normal based on height differences, storing in .zw.
+    
+    height.z = (height_L - height_R) * 0.5;
+    height.w = (height_T - height_B) * 0.5;
+    
+    heightTexture[id_C] = height;
+}
