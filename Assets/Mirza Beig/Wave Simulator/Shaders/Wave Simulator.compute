@@ -7,7 +7,6 @@
 #define THREAD_COUNT 16
 
 RWTexture2D<float4> heightTexture;
-//RWTexture2D<float2> velocityTexture;
 
 uint size;
 
@@ -29,6 +28,8 @@ float speed = 1.0;
 #define off_R int2( 1,  0);
 #define off_T int2( 0,  1);
 #define off_B int2( 0, -1);
+
+// *Somewhat* optional, but can be useful for debugging.
 
 [numthreads(THREAD_COUNT, THREAD_COUNT, 1)]
 void Kernel_Clear(uint3 id : SV_DispatchThreadID)
