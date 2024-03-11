@@ -32,3 +32,7 @@ You'll find everything under Mirza Beig/Wave Simulator/...
 ## Social Media
 - [Twitter](https://twitter.com/TheMirzaBeig/)
 - [YouTube](https://www.youtube.com/c/MirzaBeig)
+
+## License
+
+Do whatever you want with this.
