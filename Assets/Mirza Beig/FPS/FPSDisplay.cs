@@ -11,7 +11,7 @@ public class FPSDisplay : MonoBehaviour
 
     GUIStyle style = new GUIStyle();
 
-    public int size = 16;
+    public int size = 32;
 
     [Range(0.0f, 2.0f)]
     public float scale = 1.0f;

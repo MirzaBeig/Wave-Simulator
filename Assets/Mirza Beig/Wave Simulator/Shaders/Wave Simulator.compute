@@ -4,23 +4,29 @@
 #pragma kernel Kernel_WaveSimulator
 #pragma kernel Kernel_CalculateNormals
 
+// Make sure these match in C#.
+
 #define THREAD_COUNT 16
+#define MAX_INPUTS 32
+
+struct Input
+{
+    int2 coord;
+    float radius;
+};
+
+int inputCount;
+StructuredBuffer<Input> inputs;
 
 RWTexture2D<float4> heightTexture;
 
 uint size;
 
-float time;
-float deltaTime;
-
-float4 iMouse = 0.0;
-
-float inputRadius = 8.0;
-float decay = 0.99;
-
 // DO NOT EXCEED 2.0.
 
 float speed = 1.0;
+
+float decay = 0.99;
 
 // Neighbour pixel offsets: top, bottom, left, right.
 
@@ -41,7 +47,13 @@ void Kernel_Clear(uint3 id : SV_DispatchThreadID)
 void Kernel_WaveSimulator(uint3 id : SV_DispatchThreadID)
 {
     int2 id_C = id.xy;
-
+    
+    //if (id.x == 0 || id.y == 0 || id.x == size - 1 || id.y == size - 1)
+    //{
+    //    heightTexture[id_C] = 0.0;
+    //    return;
+    //}
+    
     int2 id_L = id_C + off_L;
     int2 id_R = id_C + off_R;
     int2 id_T = id_C + off_T;
@@ -52,9 +64,16 @@ void Kernel_WaveSimulator(uint3 id : SV_DispatchThreadID)
     // If the mouse is down, add a wave.
     // Can also just multiply by iMouse.z to avoid the if statement.
     
-    if (iMouse.z > 0.0)
-    {
-        height.x += smoothstep(1.0, 0.0, length(iMouse.xy - id_C) / inputRadius);
+    //if (iMouse.z > 0.0)
+    //{
+    //    height.x += smoothstep(1.0, 0.0, length(iMouse.xy - id_C) / inputRadius);
+    //}
+    
+    for (int i = 0; i < inputCount; i++)
+    {        
+        Input input = inputs[i];
+        
+        height.x += smoothstep(1.0, 0.0, length(input.coord - id_C) / input.radius);
     }
     
     float height_L = heightTexture[id_L].x;

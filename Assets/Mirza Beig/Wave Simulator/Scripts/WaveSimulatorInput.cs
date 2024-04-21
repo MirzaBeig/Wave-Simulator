@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[DefaultExecutionOrder(-100)]
 public class WaveSimulatorInput : MonoBehaviour
 {
     Vector4 mouse;
@@ -9,9 +10,12 @@ public class WaveSimulatorInput : MonoBehaviour
 
     public float inputRadius = 10.0f;
 
+    WaveSimulatorMaterial waveSimulatorTextureToMaterial;
+
     void Start()
     {
         waveSimulator = GetComponent<WaveSimulator>();
+        waveSimulatorTextureToMaterial = GetComponent<WaveSimulatorMaterial>();
     }
 
     void UpdateMouseInput()
@@ -39,10 +43,17 @@ public class WaveSimulatorInput : MonoBehaviour
                 Vector2 mousePosition = (hit.textureCoord) * waveSimulator.size;
 
                 UpdateMousePosition(mousePosition);
+
+                Vector2Int mouseCoord = new(Mathf.RoundToInt(mouse.x), Mathf.RoundToInt(mouse.y));
+
+                waveSimulator.AddInput(mouseCoord, inputRadius);
             }
         }
 
-        waveSimulator.SetMouseInput(mouse, inputRadius);
+        //waveSimulator.SetMouseInput(mouse, inputRadius);
+
+        waveSimulatorTextureToMaterial.material.SetVector(waveSimulatorTextureToMaterial.mouseName, mouse);
+        waveSimulatorTextureToMaterial.material.SetFloat(waveSimulatorTextureToMaterial.radiusName, inputRadius);
     }
 
     void Update()
